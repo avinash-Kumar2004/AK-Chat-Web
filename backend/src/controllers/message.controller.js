@@ -41,6 +41,10 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
+    if (!text && !image && !audio) {
+      return res.status(400).json({ message: "Message cannot be empty" });
+    }
+
     let imageUrl;
     let audioUrl;
 
@@ -53,7 +57,7 @@ export const sendMessage = async (req, res) => {
 
     if (audio) {
       const upload = await cloudinary.uploader.upload(audio, {
-        resource_type: "video",
+        resource_type: "auto",
         folder: "chat_audio",
       });
       audioUrl = upload.secure_url;
@@ -68,13 +72,15 @@ export const sendMessage = async (req, res) => {
     });
 
     const receiverSocketId = getReceiverSocketId(receiverId);
-
-    if (receiverSocketId) {
+    if (receiverSocketId)
       io.to(receiverSocketId).emit("newMessage", newMessage);
-    }
+
+    const senderSocketId = getReceiverSocketId(senderId);
+    if (senderSocketId) io.to(senderSocketId).emit("newMessage", newMessage);
 
     res.status(201).json(newMessage);
   } catch (error) {
+    console.error("Error in sendMessage:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
