@@ -27,15 +27,16 @@ app.use('/api/auth', authRoutes)
 app.use('/api/message', messageRoutes)
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")))
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  // ✅ FIXED HERE
-  app.get("/*", (req, res) => {
+  
+  app.get("/:path(*)", (req, res) => {
     res.sendFile(
       path.join(__dirname, "../frontend", "dist", "index.html")
-    )
-  })
+    );
+  });
 }
+
 
 server.listen(PORT, () => {
   ConnectDB()
