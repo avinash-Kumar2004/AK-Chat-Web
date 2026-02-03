@@ -1,8 +1,3 @@
-import { create } from "zustand";
-import toast from "react-hot-toast";
-import { axiosInstance } from "../lib/axios";
-import { useAuthStore } from "./useAuthStore";
-
 export const useChatStore = create((set, get) => ({
   users: [],
   messages: [],
@@ -14,7 +9,10 @@ export const useChatStore = create((set, get) => ({
     set({ isUserLoading: true });
     try {
       const res = await axiosInstance.get("/message/users");
-      set({ users: res.data });
+
+      set({
+        users: Array.isArray(res.data) ? res.data : res.data.users || [],
+      });
     } catch {
       toast.error("Failed to load users");
     } finally {
@@ -26,7 +24,12 @@ export const useChatStore = create((set, get) => ({
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/message/${userId}`);
-      set({ messages: res.data });
+
+      set({
+        messages: Array.isArray(res.data)
+          ? res.data
+          : res.data.messages || [],
+      });
     } catch {
       toast.error("Failed to load messages");
     } finally {
@@ -60,8 +63,10 @@ export const useChatStore = create((set, get) => ({
       const { selectedUser } = get();
       if (!selectedUser) return;
 
-    const isMessageSentfromSelectedUser =newMessage.senderId == selectedUser._id
-      if (!isMessageSentfromSelectedUser) return;
+      const isMessageFromSelectedUser =
+        newMessage.senderId === selectedUser._id;
+
+      if (!isMessageFromSelectedUser) return;
 
       set((state) => ({
         messages: [...state.messages, newMessage],
